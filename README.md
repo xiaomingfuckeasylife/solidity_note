@@ -22,7 +22,7 @@ contract SimpleStorage{// 一个合约是一串代码的集合其中包含有函
 
 subcurrency exmaple
 ```go
-pragma solidity ^0.4.0
+pragma solidity ^0.4.0;
 
 contract Coin {
   // public 使得变量minter可以在外部进行访问 minter是一个地址类型 地址类型是一个160-bit值并且不允许进行任何的算术操作。
@@ -37,7 +37,7 @@ contract Coin {
   }
   可以看到我们可以使用这个函数轻松的访问到这个账户的余额。
   */
-  mapping(address=>uint) public balances;
+  mapping(address=>uint) public balances;
   // 事件可以让轻客户端进行有效的调用
   // 定义了一个所谓的事件，在调用他的时候，实际上调用的是最后的一个方法，send注意这个地方的使用规范，我们的接口使用的方法名字是大写
   // 调用的方法名字对应的名字只不过首字母小写。用户界面（或者服务器）能够监听那些在区块链上执行的时间并且不用对内存的很大的消耗。只要方法执行以后
@@ -67,7 +67,7 @@ contract Coin {
     if(balances[msg.sender] < amount) return;
     balances[msg.sender] -= amount;
     balances[receiver] += amount;
-    Send(msg.sender,receiver,amount);
+    Sent(msg.sender,receiver,amount);
   }
   
   // 后续： msg （tx , block）是一个很魔性的变量，让我们能够获取区块链的一些内部特性。msg.sender总是指向执行当前方法的地址。
