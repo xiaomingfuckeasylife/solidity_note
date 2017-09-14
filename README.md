@@ -152,18 +152,18 @@ EVM是让智能合约在以太坊上面运行的虚拟机。他不仅是沙河�
 pragma solidity ^0.4.11;
 /// @title Voting with delegation.
 contract Ballot {
-    // 定义了一个结构体类型代表一票
-    struct Voter {
-       uint weight ; // 投票的权重，由那些下方投票权重的人累加
-       bool voted  ; // 是否已经投票
-       address delegate ; // 代表人地址
-       uint vote ; 投票的选项的索引
-    }
+    // 定义了一个结构体类型代表一票
+    struct Voter {
+       uint weight ; // 投票的权重，由那些下方投票权重的人累加
+       bool voted  ; // 是否已经投票
+       address delegate ; // 代表人地址
+       uint vote ; //投票的选项的索引
+    }
     
-    // 定义了一个投票选择项的结构体
-    struct Proposal {
-        bytes32 name ;  // 名字最大只能有32个字节 也就是最大只能有32个因为单词
-        uint voteCount; // 选项获得的选票
+    // 定义了一个投票选择项的结构体
+    struct Proposal {
+        bytes32 name ;  // 名字最大只能有32个字节 也就是最大只能有32个因为单词
+        uint voteCount; // 选项获得的选票
     }
 
     address public chairperson ; // 投票主席
@@ -184,7 +184,7 @@ contract Ballot {
     		proposals.push(Proposal({
     			name:proposalNames[i],
     			voteCount:0
-    		}))
+    		}));
     	}
     }
 
@@ -202,7 +202,7 @@ contract Ballot {
     	require (!sender.voted);
 
     	// 不能自己让自己投票，形成死循环
-    	require (to != msg.sender)
+    	require (to != msg.sender);
 
     	// 找到最终的投票代理，通常来说这样的循环是很危险的，因为如果循环的时间太久那么很可能造成gas消耗殆尽
     	// 这个地方会导致delegate方法执行不成功，但是在其他地方很可能导致智能合约完全的卡死。
@@ -210,7 +210,7 @@ contract Ballot {
     		to = voters[to].delegate;
 
     		// 不能形成闭环
-    		require (to != msg.sender)
+    		require (to != msg.sender);
     	}
 
     	sender.voted = true;
@@ -228,11 +228,11 @@ contract Ballot {
     // 对选项进行投票
     function vote(uint proposal) {
     	Voter storage sender = voters[msg.sender];
-    	require (!sender.voted)
+    	require (!sender.voted);
     	sender.voted = true;
     	sender.vote  = proposal;
     	// 如果没有这个proposal那么会自动抛出一个异常，并且回滚已经发生的所有发生的改变
-    	proposals[proposal] += sender.weight;
+    	proposals[proposal].voteCount += sender.weight;
     }
 
     // 比较看那个选项的投票最多
