@@ -152,10 +152,105 @@ EVM是让智能合约在以太坊上面运行的虚拟机。他不仅是沙河�
 pragma solidity ^0.4.11;
 /// @title Voting with delegation.
 contract Ballot {
-    struct Voter {
-       uint weight ; // 投票的
-       
+    // 定义了一个结构体类型代表一票
+    struct Voter {
+       uint weight ; // 投票的权重，由那些下方投票权重的人累加
+       bool voted  ; // 是否已经投票
+       address delegate ; // 代表人地址
+       uint vote ; 投票的选项的索引
     }
+    
+    // 定义了一个投票选择项的结构体
+    struct Proposal {
+        bytes32 name ;  // 名字最大只能有32个字节 也就是最大只能有32个因为单词
+        uint voteCount; // 选项获得的选票
+    }
+
+    address public chairperson ; // 投票主席
+
+    // 定义一个表存储所有地址对应的所有的选票
+    mapping(address=>Voter) public voters ; 
+
+    // 定义一个可变长的选项切片
+    Proposal[] public proposals;
+
+    // 为下面的这些选项创建一个选票
+    function Ballot(bytes32[] proposalNames) {
+    	chairperson = msg.sender;
+    	voters[chairperson].weight = 1;
+    	// 初始化选项切面
+    	// `Proposal({...})` 创建一个临时选项。使用`proposals.push(...)`将选型放在选项数组的最后面
+    	for (uint i=0;i<proposalNames.length;i++){
+    		proposals.push(Proposal({
+    			name:proposalNames[i],
+    			voteCount:0
+    		}))
+    	}
+    }
+
+    function giveRightToVote(address voter){
+    	// 如果require得出的结果是false 那么调用会停止然后退回所有到原始状态以及Ether的余额，
+    	// 这个通常是一个很好使用这个函数来验证但是也要注意，这个函数目前也是需要消耗gas的但是
+    	// 以后可能会取消gas的消耗。
+    	require ((msg.sender != chairperson) && (!voters[voter].voted) && (voters[voter].weight == 0));
+    	voters[voter].weight = 1;
+    }
+
+    function delegate(address to) {
+    	// 声明一个变量 并且分配引用地址
+    	Voter storage sender = voters[msg.sender];
+    	require (!sender.voted);
+
+    	// 不能自己让自己投票，形成死循环
+    	require (to != msg.sender)
+
+    	// 找到最终的投票代理，通常来说这样的循环是很危险的，因为如果循环的时间太久那么很可能造成gas消耗殆尽
+    	// 这个地方会导致delegate方法执行不成功，但是在其他地方很可能导致智能合约完全的卡死。
+    	while(voters[to].delegate != address(0)){
+    		to = voters[to].delegate;
+
+    		// 不能形成闭环
+    		require (to != msg.sender)
+    	}
+
+    	sender.voted = true;
+    	sender.delegate = to;
+    	Voter storage delegate = voters[to];
+    	// 如果代理已经投了的话，直接把权重加到投入的选项上。
+    	if(delegate.voted){
+    		proposals[delegate.vote].voteCount += sender.weight;
+    	}else {
+    		//如果没有投的话，把权重加到代理的身上
+    		delegate.weight += sender.weight;
+    	}
+    }
+
+    // 对选项进行投票
+    function vote(uint proposal) {
+    	Voter storage sender = voters[msg.sender];
+    	require (!sender.voted)
+    	sender.voted = true;
+    	sender.vote  = proposal;
+    	// 如果没有这个proposal那么会自动抛出一个异常，并且回滚已经发生的所有发生的改变
+    	proposals[proposal] += sender.weight;
+    }
+
+    // 比较看那个选项的投票最多
+    function winningProposal() constant returns(uint winningProposal){
+    	uint winningVoteCount = 0;
+    	for(uint i=0;i<proposals.length ;i++){
+    		if (proposals[i].voteCount > winningVoteCount){
+    			winningVoteCount = proposals[i].voteCount;
+    			winningProposal = i;
+    		}
+    	}
+    }
+
+    // 通过调用winningProposal()方法获取获胜的选项下标。
+    // 然后返回选项的名字
+    function winnerName() constant returns (bytes32 winnerName) {
+    	winnerName = proposals[winningProposal()].name;
+    }
 }
 ```
 
