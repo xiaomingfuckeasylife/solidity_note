@@ -364,9 +364,13 @@ contract SimpleAuction{
 #### 匿名拍卖
 
 ```go
-
+  // not now . 
 ```
 
+####  安全远程购买
+```go
+    
+```
 
 
 
