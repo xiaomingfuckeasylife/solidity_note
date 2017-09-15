@@ -263,6 +263,104 @@ contract Ballot {
 
 简单的公开售卖合约是每个人都可以发送他们的投标价格在投标时段内，投标包含有发送金额或者ETH从而将他们的投标与投标人绑定。如果最高的投标价格出现了，那么
 之前的最高的投资人会得到他之前投标的钱。在投标的结束阶段，合约必须手动调用让拍卖方获取到钱。合约不能自动激活。
+```go
+pragma solidity ^0.4.11;
+
+contract SimpleAuction{
+	// 拍卖合约的参数，时间要么是从1970年1月1日到现在的绝对时间或者时间段
+	// 受益人
+	address public beneficiary ; 
+	// 合约开始时间
+	uint public auctionStart;
+	// 合约进行时间
+	uint public biddingTime;
+
+	// 当前最高的投标者
+	address public highestBidder;
+	// 最高的价格
+	uint public highestBid;
+
+	// 允许没有中标的投资者取回自己的投标金额
+	mapping(address => uint) pendingReturns;
+
+	// 投标是否结束
+	bool ended;
+
+	//定义投标价格增长事件 事件以大写字母开始
+	event HighestBidIncreased(address bidder , uint amount);
+	//定义投标结束事件  
+	event AuctionEnded(address winner , uint amount);
+
+	//构造器
+	function SimpleAuction(uint _biddingTime,address _beneficiary){
+		beneficiary = _beneficiary;
+		auctionStart = now;
+		biddingTime = _biddingTime;
+	}
+
+	// 投标 如果没有中标 金额可被赎回
+	// 关键字payable必须的，让这个函数能够接受ether
+	function bid() payable {
+
+		// 不能超过投标时间，如果超过了投标时间取消所有的事物操作
+		require(now <= (auctionStart + biddingTime));
+		// 必须要求投标金额大于目前的最高金额，不然返回所有惭怍
+		require(msg.value > highestBid);
+		// 如果最高的投标者已经被初始化
+		if (highestBidder != 0) {
+			// 将原有的最高者加入到退回列表
+			pendingReturns[highestBidder] += highestBid;
+		}
+		highestBidder = msg.sender;
+		highestBid = msg.value;
+		HighestBidIncreased(msg.sender,msg.value);
+	}
+
+	// 被推翻的金额可以手动退回
+	function withdraw() returns (bool) {
+		// 应退回的金额
+		uint amount = pendingReturns[msg.sender];
+		// 如果金额大于0
+		if(amount > 0){
+			// 清0处理
+			pendingReturns[msg.sender] = 0;
+			// 发送金额给自己
+			if (!msg.sender.send(amount)){
+				// 如果发送失败，重置原始的退回金额
+				pendingReturns[msg.sender] = amount;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// 结束竞标 并且将酬劳给予受益者
+	function auctionEnd(){
+		// 下面的例子是一个很好的范例，给我们展示了如何与其他的合约进行沟通
+		// 分为以下三个部分：
+		// 1 . 状态检查。
+		// 2 . 发生行为（通常改变状态）。
+		// 3 . 和其他合约进行交互。
+		// 如果这些顺序反了，其他的合约可能在回调当前的合约的时候造成状态的修改，或者多次支付ether等情况
+
+		// 1 Conditions
+		// 判断竞标时间是否已经结束
+		require ( now >= (auctionStart + biddingTime));
+		// 判断是否竞标已经结束 
+		require (!ended); 
+
+		// 2 
+		// 执行动作 改变状态 开启事件
+		ended = true;
+		AuctionEnded(highestBidder,highestBid);
+
+		// 3. Interaction  
+		//发送ether给受益者
+		beneficiary.transfer(highestBid);
+	}
+}
+```
+
 
 
 
