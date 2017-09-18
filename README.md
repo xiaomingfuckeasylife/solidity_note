@@ -501,6 +501,74 @@ This is a multi-line comment.
 /** @title Shape calculator. */
 ```
 
+### 合约结构
+在solidity中contract和在面向对象语言中的class很类似。每一个合约可以进行变量的声明，函数声明modifier声明，事件声明，结构体类型，枚举类型。更重要的是合约可以继承其他的合约。
 
+#### 变量状态
+状态变量会永久的存在合约存储空间中，
+```
+pragma solidity ^0.4.0;
+contract SimpleStorage{
+    uint storedData; // 状态变量
+}
+```
+#### 函数
+函数是合约中能够独立的执行单元
+```
+pragma solidity ^0.4.0;
 
+contract SimpleAuction{
+    function bid() payable {
+        // ... 
+    }
+}
+```
+具体状态变量和函数的获取权限，我们在后面会考虑进去。
 
+#### 函数修饰器
+函数修饰器可以在声明阶段修改函数语义，具体内容我们在后面会说到
+```
+pragma solidity ^0.4.0;
+contract Purchase{
+    address public buyer;
+    modifier onlyBuyer(){
+        require(msg.sender == buyer);
+	-;
+    }
+}
+```
+
+#### 事件
+对于EVM日志特性，事件是一个很方便的接口。
+```
+pragma solidity ^0.4.0;
+contract SimpleAuction{
+    event HighestBidIncreased(address bidder , uint amount); // Event 
+    
+    function bid() payable{
+        // ...
+	HighestBidIncreased(msg.sender,msg.value); // Triggering event 
+    }
+}
+```
+#### 结构体
+结构体和Go中基本一致，但是这里都是定义在contract中，定义实体的数据结构。
+```
+pragma solidity ^0.4.0;
+contract Ballot {
+    struct Voter{
+    	uint weight;
+	bool voted;
+	address delegate;
+	uint vote;
+    }
+}
+```
+#### 枚举类型
+用法同JAVA
+```
+pragma solidity ^0.4.0;
+contract Purchase {
+    enum State { Created , Locked , Inactive}
+}
+```
