@@ -369,7 +369,85 @@ contract SimpleAuction{
 
 ####  安全远程购买
 ```go
-    
+    pragma solidity ^0.4.11;
+
+// 用于购买的智能合约
+contract Purchase{
+	// 商品价值
+	uint public value;
+	// 卖方
+	address public seller;
+	// 买方
+	address public buyer;
+	// 购买状态枚举
+	enum State {Created , Locked , Inactive}
+	// 记录当前合约状态
+	State public state;
+
+	// 确保合约生成者的value是偶数
+	function Purchase() payable {
+		// 合约生成者为卖方
+		seller = msg.sender;
+		// 取合约的1/2价格作为购买的价值
+		value  = msg.value/2;
+		// 要求合约价值必须是偶数值
+		require((2 * value) == msg.value);
+	}
+
+	// 修饰符 在程序执行前判断，减少gas的使用
+	modifier condition(bool _condition) {
+		require(_condition);
+		_;
+	}
+
+	// 只允许买方
+	modifier onlyBuyer(){
+		require(msg.sender == buyer);
+		_;
+	}
+
+	modifier onlySeller(){
+		require(msg.sender == seller);
+		_;
+	}
+
+	// 是否在我们需要的状态
+	modifier inState(State _state){
+		require(state == _state);
+		_;
+	}
+
+	// 事件用于跟踪事物发生
+	event Aborted();
+	event PurchaseConfirmed();
+	event ItemReceived();
+
+	function abort() onlySeller inState(State.Created) {
+		Aborted();
+		// 终止后改变状态
+		state = State.Inactive;
+		// 将合约包含的ether转回给卖方
+		seller.transfer(this.balance);
+	}
+
+	// 确定买方，买方的金额必须有两倍的 value 值得ether 。买完之后锁定金额
+	function confirmPurcharse() inState(State.Created) condition(msg.value == (2 * value)) payable{
+		PurchaseConfirmed();
+		buyer = msg.sender ; 
+		state = State.Locked;
+	}
+
+	// 买方确定收款项 这个会释放锁定的ether
+	function confirmReceived() onlyBuyer inState(State.Locked){
+		ItemReceived();
+		// 改状态
+		state = State.Inactive;
+		// 给予买方价值
+		buyer.transfer(value);
+		// 转移卖方价值
+		seller.transfer(this.balance);
+	}
+}
 ```
 
 
