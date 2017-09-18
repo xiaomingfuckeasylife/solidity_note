@@ -450,10 +450,56 @@ contract Purchase{
 }
 ```
 
+### 深入Solidity
+这个章节会提供给你所有你应该知道的关于Solidity的一切。
 
+#### solidity的文件结构
+源文件能够包含任意数量的合约定义，包括指令和编译指令。
 
+#### 编译版本
+```go
+pragma solidity ^0.4.0;
+```
+这种文件抬头不会被编译在0.4.0之前，也不会被编译在0.5.0以后，因为在0.5.0之后可能会有打的变动，可能使得我们的代码执行结果和我们的预期不太一样。
 
+#### 引用其他的源文件
 
+#### 语法以及语义
+solidity支持import表达式，这个JavaScript的import很像。
+在全局级别，你可以引用语句像这样。
+```
+import "filename";
+```
+这个语句引用了所有在filename中声明的全局变量，以及他的import文件，并且把它放到当前的全局变量域中。
+
+```go 
+import * as symbolName from  "filename";
+import "filename" as symbolName;
+```
+以上的两种是一样的意思，都是创建一个全局变量symbolName然后他的变量都在文件filename中，
+
+#### 文件路径 
+在solidity中所有的路径默认是绝对路径，比如上面的"filename"其实是"/filename"，如果我们想要使用当前路径或者上一级目录，可以使用"." , ".." 
+通常依靠编译器如何获取路径中的内容，通常情况下，目录的层级不需要严格的匹配到文件系统，他可以通过git，http等网络资源配置获取。
+对于solc来说，这些文件的路径可以通过`context:prefix=target`进行参数匹配其中context和target都是不必须的，target默认就是prefix
+例子
+```
+solc github.com/ethereum/dapp-bin/=/usr/local/dapp-bin/ source.sol
+
+solc module1:github.com/ethereum/dapp-bin/=/usr/local/dapp-bin/ \
+     module2:github.com/ethereum/dapp-bin/=/usr/local/dapp-bin_old/ \
+     source.sol
+```
+#### comments
+```go
+// This is a single-line comment.
+
+/*
+This is a multi-line comment.
+*/
+
+/** @title Shape calculator. */
+```
 
 
 
