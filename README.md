@@ -572,3 +572,146 @@ contract Purchase {
     enum State { Created , Locked , Inactive}
 }
 ```
+
+#### 类型
+solidity是一个静态类型语言，和go是一样的。也就是说所有的变量类型在编译阶段就已经决定了。solidity提供了一些类型可以组合成复杂的类型。
+
+#### 值类型
+之所以叫做值类型，是因为他们通过值传递。他们在传递的过程中，总是通过复制值得内容，然后传递。
+
+#### Boolean
+bool 可以存储true或者false两种其中之一。
+操作符包含"!" "&&" "||" "==" "!="
+
+#### Integers
+int/uint "u"代表无符号。uint是uint256的别名。在go solidity中无符号的整形使用的较为普遍。因为大部分情况下我们都不需要负数。
+uint8/uint256 8-256代表8到256个bits。 
+
+#### Address
+address : 保存着一个包含着20个字节的值，address类型也有成员作为所有合约的基准变量。
+可以对address使用的操作符号包括，<= , < , == , != , >= , > . 
+
+#### Address Member 
+* balance / transfer 
+我们可以使用使用balance方法获取地址中的余额。使用transfer来发送ether到地址
+```
+address x = 0x123;
+address myAddress = this;
+if (x.balance < 10 && myAddress.balance >= 10) x.transfer(10);
+```
+笔记： 如果x是一个合约地址，会有一个回调函数和transfer以及被调用，这个是被EVM约束的，如果这个在执行过程中没有了gas或者失败了，那么ether转移会被回滚，并且当前的合约会停止执行并且抛出异常。
+
+* send
+发送方法是一个底层的和transfer相反的操作，如果执行失败，那么合约不会停止，send会返回false。
+警告：send有一些潜在的风险，如果栈的深度超过1024，或者接受者没有了gas，那么转账就会失败。所以为了安全的ether转账，总是检查send的返回值。或只使用transfer或者一些更好的方式。
+
+* call / callcode / delegatecall 
+call函数提供了一些参数的类型，这些参数会被分割为32个字节。除了当第一个参数是刚好4个字节的时候，这种情况函数的签名不会被分割。
+```go
+address nameReg = "0x72ba7d8e73fe8eb666ea66babc8116a41bfb10e2";
+nameReg.call("register","MyName");
+nameReg.call(byte4(keccak256("fun(uint256)")),a);
+```
+call会返回一个布尔值，标志是否调用成功。还是产生了一个EVM异常。我们不可能有权限获取实际的返回值。
+我们可以通过.gas修饰器来修改gas的值。
+```
+nameReg.call.gas(1000000)("register","MyName");
+```
+相同的，提供的Ether值也是可以被设置的
+```
+nameReg.call.value(1 ether)("register","MyName");
+```
+笔记：目前来说我们不能使用gas或者value修饰器对重载的方法进行设值。
+
+同样的delegateCal,callcodel也可以同样被使用，这三种函数都是很底层的函数应该最后不得不使用的时候才使用，因为他们打破了solidity的安全性问题。有点像java中的反射机制。
+`.gas`可以被三种使用，`.value`选项不支持delegateCall。 callcode不建议使用在以后的代码中会被去掉
+我们可以使用this.balance 获取合约的余额。
+
+#### 固定大小的byte数组
+bytes1 bytes2 .. bytes32. byte是bytes1的别名。 有length方法
+我们也可以使用数组用byte[], 但是它很浪费空间，每一个实例会使用31个字节准确来说。最好使用bytes
+
+#### 动态数组
+bytes , string 
+
+#### 函数类型
+定义
+```sol
+function (<parameter types>) {internal|external} [pure|constant|view|payable] [returns (<return types>)] 
+```
+
+#### 数据存储位置
+每一个复制的类型不论是数组还是结构体都有一个附带的标签，也就是存储位置。关于他是存储在memory中还是存储在storage中，根据上下文，总是有默认的存储位置。但是也可以通过手动的添加`storage` `memory`来覆盖位置类型。 对于函数的参数默认的地址在memory，本地变量默认存储在storage中，对于状态变量是强制存储在storage区域中的。
+
+除了上面的两个位置以外还有一个位置`calldata` ， 这是一个不持久的也不可改变的区域用于存储函数参数。 对于外部函数的函数参数以及返回参数，都强制放在calldata位置，和memory类似。
+
+```
+pragma solidity ^0.4.0;
+
+contract C {
+    uint[] x; // the data location of x is storage
+
+    // the data location of memoryArray is memory
+    function f(uint[] memoryArray) {
+        x = memoryArray; // works, copies the whole array to storage
+        var y = x; // works, assigns a pointer, data location of y is storage
+        y[7]; // fine, returns the 8th element
+        y.length = 2; // fine, modifies x through y
+        delete x; // fine, clears the array, also modifies y
+        // The following does not work; it would need to create a new temporary /
+        // unnamed array in storage, but storage is "statically" allocated:
+        // y = memoryArray;
+        // This does not work either, since it would "reset" the pointer, but there
+        // is no sensible location it could point to.
+        // delete y;
+        g(x); // calls g, handing over a reference to x
+        h(x); // calls h and creates an independent, temporary copy in memory
+    }
+
+    function g(uint[] storage storageArray) internal {}
+    function h(uint[] memoryArray) {}
+}
+```
+
+##### Summary
+Forced data location:
+1. parameters (not return) of external functions: calldata
+2. state variables: storage
+Default data location:
+1. parameters (also return) of functions: memory
+2. all other local variables: storage
+
+#### Arrays
+bytes is almost the same as byte[]
+bytes should always be preferred over byte[] because it is cheaper.  it is packed tightly in calldata. 
+
+#### Allocation Memory Arrays.
+```
+pragma solidity ^0.4.0;
+contract C{
+    function f(uint len) {
+        uint[] memory a = new uint[](7);
+	bytes memory b = new bytes(len);
+	// Here we have a.length == 7 and b.length == len 
+    }
+}
+```
+
+Array Literals / Inline Arrays  
+```
+pragma solidity ^0.4.0;
+contract C{
+    fuction f() {
+    	g([uint,2,3]);
+    }
+    function g(uint[3] _data) {} // this is cool 
+}
+```
+
+```
+function f() {
+    // The next line creates a type error becuase uint[3] memory cannot be converted to uint[] memory. 
+    uint[] x = [uint(1),3,4];
+}
+```
+
