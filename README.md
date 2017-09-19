@@ -715,3 +715,52 @@ function f() {
 }
 ```
 
+### 单元以及全局变量
+
+#### Ether 单元
+一个字面量数字可以接`wei` , `finney`,`szabo`,`ether`用来和ether的面值进行转换，如果面值没有后缀，默认是`wei`
+![ether units](https://us.v-cdn.net/5021640/uploads/editor/1k/m1tc3b61vomv.png)
+
+#### 时间单元
+后缀例如`seconds` , `minutes` , `hours` , `days` , `years` 用于描述时间。
+
+* 1 == 1 seconds
+* 1 minutes == 60 seconds
+* 1 hours = 60 minutes 
+* 1 days == 24 hours 
+* 1 weeks == 7 days 
+* 1 years == 365 days
+
+这些变量不能被用于申请变量 例如 我们不能这样`uint t = 1 days`
+
+#### 一些特殊的变量以及函数
+有一些变量和函数存在全局命名空间下，他们主要是用于提供关于区块链的信息。
+
+#### block and transaction properties 
+
+* block.blockhash(uint blockNumber) returns (bytes32) : 返回当前区块的hash值
+* block.coinbase(address) : 返回获得当前区块的矿工的地址
+* block.difficulty(uint) : 返回当前区块的难度值
+* block.gaslimit(uint) : 返回当前区块的gas限制
+* block.number(uint) : 返回当前区块的区块层数
+* block.timestamp(uint) : 返回从第一块区块到现在的时间
+* msg.data(bytes):调用数据
+* msg.gas(uint):剩余的gas值
+* msg.sender(address): 发送信息的地址
+* msg.sig(bytes4): 调用数据的前四个字节（函数标志符号）
+* msg.value(uint): 有多少wei被发送
+* now (uint): 当前时间
+* tx.gasprice (uint):事物的油价格
+* tx.origin (address) : 事物的发起地址
+
+注意：
+* `msg.sender` | `msg.value` 会随着调用者的不同，而导致值发生变化
+* 不要依赖`block.timestamp`,`now`,`block.blockhash`来取随机值，除非你知道你在做什么。
+* 获取区块的哈希值只能获取最近的256块。基于扩展性原因
+
+#### 错误处理
+`assert(bool condition)`  被用于内部使用，如果错误会抛出异常
+`require(bool condition)` 被用于输入或者是外部组件检查，如果错误抛出异常
+`revert()` 终止程序执行，并且回滚所有的之前的改变
+
+
