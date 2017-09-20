@@ -763,4 +763,89 @@ function f() {
 `require(bool condition)` 被用于输入或者是外部组件检查，如果错误抛出异常
 `revert()` 终止程序执行，并且回滚所有的之前的改变
 
+#### 算术和加密函数
+`addmod(uint x , uint y , uint k) returns (uint) => (x + y) % k`
+`mulmod(uint x , uint y , uint l) returns (uint) => (x * y) % k`
+`keccak256(...) returns (bytes32)` 计算出Ethereum-SHA-3哈希参数
+`sha256(...) returns (bytes32)` 计算出SHA-256哈希参数
+`sha3(...) returns (bytes32)` 是keccak256的别名
+`ripemd160(...) returns (bytes20)` 计算RIPEMD-160哈希参数
 
+#### 地址相关联的成员以及方法
+```
+<address>.balance   (uint256) // 地址的余额单位是Wei
+<address>.transfer(uint256 amount) // 发送一定金额的Wei到指定的地址,如果错误会抛出异常
+<address>.send(uint256 amount) returns (bool) // 发送一定金额的Wei到制定的地址，返回false如果失败
+<address>.call(...) returns (bool) // 低级别的函数调用，返回false如果调用失败
+<address>.callcode ... 
+<address>.delegatecall(...) ... 
+```
+
+#### 合约相关的
+
+`this` // 当前合约地址 ， 和Address可以相互转化
+`selfdestruct(address recipient)` // 毁掉当前的合约，发送他的ether值到指定的地址
+`suicide(address recipient)` // selfdestruct的别名
+
+#### 表达式和控制结构
+```
+pragma solidity ^0.4.0;
+contract Simple{
+    function arithmetics(uint _a , uint _b) returns (uint o_sum , uint o_product){
+    	o_sum = _a + _b ;
+	o_product = a * b ;
+	// 我们可以省略返回语句这个地方和go的naked return 很类似但是更加的简洁甚至不需要return关键字
+    }
+}
+```
+
+内部函数调用只需要进行简单的jump就可以了
+外部函数的调用可以通过`this.g(8)` , `c.g(2)`其中c是一个合约的实例，对于外部函数的调用是通过message call 并不是通过直接的jump完成的。`this`不能再构造体中使用。因为合约还没有被创建。
+当我们调用外部方法的时候我们可以设置`Wei` 以及 `gas`
+```go
+pragma solidity ^0.4.0;
+contract InfoFeed {
+    function info() payable returns (uint ret) {return 42;}
+}
+contract Consumer{
+    InfoFeed feed;
+    function setFeed(address addr) {feed = InfoFeed(addr);} // 这个地方使用了类型转换,如果地址不对就会发生转换异常
+    function callFeed() {feed.info.value(10).gas(800);}     // 调用info的时候我们制定的发送的Wei 以及使用的gas值
+}
+```
+
+#### learn syntax from examples  
+```
+pragma solidity ^0.4.0;
+contract C {
+    function f(uint key , uint value) {
+        // ...
+    }
+    
+    function g() {
+    	// named arguments // 我们可以使用{}的形式传递参数 
+	f({value:2,key:3}) 
+    }
+    
+    // 省略了参数的名字 这个时候这个变量没有人能够访问得到
+    function func(uint k ,uint ) returns (uint) {
+    	return k;
+    }
+    
+    function createD(uint arg) {
+    	D newD = new D(arg); // 使用合约D创建和java中创建对象是一样的
+    }
+    
+    function createDWithEther(uint arg , uint amount) payable {
+    	D newD = (new D).value(amount)(arg);
+    }
+}
+
+contract D {
+    uint x ; 
+    function D(uint a) payable {
+        x = a;
+    }
+}
+
+```
