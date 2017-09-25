@@ -849,3 +849,9 @@ contract D {
 }
 
 ```
+
+Generator a new ethereum address using command . 
+```
+geth --password /dir/passwordfile account new 
+cp ~/Library/Ethereum/keystore/keystore.file ~/Library/Ethereum/rinkeby/keystore/
+```
