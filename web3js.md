@@ -48,4 +48,12 @@ function：
 
 events:
 * type:“event”
-* name:"inputs"
+* name:"inputs" 一个数组对象，包含着：
+  - name : 参数名称
+  - type : 参数类型
+  - indexed:true 
+* anonymous:true 如果事件被定义成匿名的。
+
+
+#### web3
+
