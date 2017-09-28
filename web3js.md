@@ -162,3 +162,45 @@ web3.extend({
  }]
 })
 ```
+
+#### web3.eth
+web3-eth can allow us interact with ethereum blockchain and smart contract . 
+```
+var Eth = require('web3-eth');
+var eth = new Eth('http://localhost:8545');
+```
+
+#### checksum addresses 
+because all ethereum address returned by functions of this package are returned as checksum addresses . this means some letters are uppercase and some are lowercase. Based on that it will calculate a checksum for the address and prove its correctness.  
+
+#### setProvider 
+```
+web3.setProvider(...);
+web3.eth.setProvider(..);
+... // this will change the provider for the module. 
+```
+
+#### providers
+```
+web3.eth.defaultAccount 
+```
+// 用于一些方法的默认from属性。 比如下面的一些方法
+* web3.eth.sendTransaction()
+* web3.eth.call()
+* new web3.eth.Contract() -> myContract.methods.myMethod().call()
+* new web3.eth.Contract() -> myContract.method.myMethod().send()
+
+```
+web3.eth.defaultBlock
+```
+the default value is 'latest' 
+can be used in the following methods
+```
+eth.getBalance()
+eth.getCode()
+eth.getTransactionCount()
+eth.getStorageAt()
+eth.call();
+```
+the property can be `latest , pending , genesis`
+
