@@ -56,4 +56,62 @@ events:
 
 
 #### web3
+web3是一个用来和以太坊相关模块交互的对象
+```js
+>var Web3 = require('web3');
+>Web3.utils // utils module
+>Web3.version // web3 version 
+>Web3.modules // show all the modules
 
+>var web3 = new Web3('ws://localhost:8546'); 
+>web3.eth  // eth module 
+>web3.shh  // shh module
+>web3.bzz  // bzz module
+>web3.utils// utils module
+>web3.version // show version
+
+```
+#### 使用provider连接web3不同的模块
+```js
+// you can 
+var Web3 = require('web3');
+var web3 = new Web3("http://localhost:8545");
+
+// or 
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+
+// change provider 
+web3.setProvider('http://localhost:8545');
+
+// or
+var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8646'));
+
+// using the IPC Provider in node.js
+var net = require('net');
+var web3 = new Web3('/Users/clark/Library/Ethereum/geth.ipc',net); // mac os path
+
+// or 
+var web3 = new Web3(new Web3.providers.IpcProvider('/Users/clark/Library/Ethereum/geth.ipc'),net);
+```
+#### prodivers 
+* Object-HttpProvider: httpProvider is deprecated , as it won't work for subscriptions.
+* Object-WebsocketProvider:The Websocket provider is the standard for usage in legacy browsers.
+* Object-IpcProvider:The IPC provider is used node.js dapps when running a local node , Gives the most secure connection.
+
+##### currentProvider
+当前的连接提供者,如果没有返回null
+```
+web3.currentProvider
+web3.eth.currentProvider
+web3.shh.currentProvider
+web3.bzz.currnetProvider
+```
+##### BatchRequest
+批量请求
+```
+web3.batchRequest();
+web3.eth.batchRequest();
+web3.shh.batchRequest();
+..
+```
