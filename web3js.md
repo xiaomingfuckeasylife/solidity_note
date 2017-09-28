@@ -115,3 +115,50 @@ web3.eth.batchRequest();
 web3.shh.batchRequest();
 ..
 ```
+不需要任何的参数，返回一个对象可以接入下面两种方法
+* add(request): add a request object to the batch call . 
+* execute(): will execute the batch request. 
+```js
+var contract = new web3.eth.Contract(abi,address);
+var batch = new web3.BatchRequest();
+batch.add(web3.eth.getBalance.request('0x00000','latest',callback));
+batch.add(contract.methods.balance(address).call.request({from:'0x000'},callback2));
+batch.execute();
+```
+##### extend 
+继承模块
+```js
+web3.extend(methods);
+web3.eth.extend(methods);
+web3.shh.extend(methods);
+web3.bzz.extend(methods);
+```
+参数
+1.methods - Object:Extension object with array of methods description objects as follows:
+* property - String: the name of the property to add to the module. If no propert is set it willl be added to the module directly . 
+* methods-Array:the array of method descriptions:
+  -name - String : Name of the method to be added .
+  -call - String : The RPC method name . 
+  -params - Number:(optional) The number of parameters for that function. defualt().
+  -inputFormatter  - Array:
+  -outputFormatter - function
+2 returns : the extended modules  
+```js
+web3.extend({
+  property:'myModule',
+  methods:[{
+    name : 'getBalance',
+    call : 'eth_getBalance',
+    params:2,
+    inputFormatter:[web3.extend.formatters.inputAddressFormatter,web3.extend.formatters.inputDefaultBlockNumberFormatter],
+    outputFormatter:web3.utils.hexToNumberString
+  }]
+});
+
+web3.extend({
+ method:[{
+  name:'directCall',
+  call:'eth_callForFun'
+ }]
+})
+```
